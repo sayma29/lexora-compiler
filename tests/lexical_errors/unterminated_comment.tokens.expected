@@ -1,0 +1,12 @@
+=== TOKENS (7) ===
+LINE:COL  TYPE           LEXEME
+1:1       KEYWORD        int
+1:5       IDENTIFIER     a
+1:6       DELIMITER      ;
+2:1       IDENTIFIER     a
+2:3       OPERATOR       =
+2:5       INT_LITERAL    1
+2:6       DELIMITER      ;
+
+=== LEXICAL ERRORS (1) ===
+Lexical error at line 3: Unterminated block comment (opened here, never closed with */)

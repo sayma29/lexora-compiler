@@ -1,0 +1,38 @@
+=== TOKENS (29) ===
+LINE:COL  TYPE           LEXEME
+1:1       KEYWORD        int
+1:5       IDENTIFIER     a
+1:6       DELIMITER      ;
+2:1       KEYWORD        int
+2:5       INVALID        2fast
+2:10      DELIMITER      ;
+3:1       KEYWORD        float
+3:7       IDENTIFIER     f
+3:9       OPERATOR       =
+3:11      INVALID        3.
+3:13      DELIMITER      ;
+4:1       IDENTIFIER     a
+4:3       OPERATOR       =
+4:5       INT_LITERAL    5
+4:7       INVALID        @
+4:9       INT_LITERAL    2
+4:10      DELIMITER      ;
+5:1       KEYWORD        bool
+5:6       IDENTIFIER     b
+5:8       OPERATOR       =
+5:10      IDENTIFIER     a
+5:12      INVALID        &
+5:14      INT_LITERAL    1
+5:15      DELIMITER      ;
+6:1       KEYWORD        print
+6:7       IDENTIFIER     a
+6:9       INVALID        #
+6:11      IDENTIFIER     b
+6:12      DELIMITER      ;
+
+=== LEXICAL ERRORS (5) ===
+Lexical error at line 2: Invalid identifier (cannot start with a digit) '2fast'
+Lexical error at line 3: Malformed number (digits needed after the decimal point) '3.'
+Lexical error at line 4: Invalid character '@'
+Lexical error at line 5: Invalid operator (did you mean '&&'?) '&'
+Lexical error at line 6: Invalid character '#'
