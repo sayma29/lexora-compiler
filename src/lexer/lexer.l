@@ -18,6 +18,7 @@
 #include "tokens_standalone.h"
 YYSTYPE yylval;
 #else
+#include "ast.h"
 #include "parser.tab.h"
 #endif
 

@@ -1,33 +1,47 @@
-# Lexora Makefile
-#
-# Tool names are variables so this works with either setup:
-#   win_flex / win_bison  (win_flex_bison zip)  -> just run `make`
-#   flex / bison          (MSYS2, Linux)        -> run `make FLEX=flex BISON=bison`
+
+# Lexora Compiler Makefile
 
 CC     = gcc
-CFLAGS = -Wall -Wextra -g -Isrc/diag -Isrc/lexer
+CFLAGS = -Wall -Wextra -g -Isrc/diag -Isrc/lexer -Isrc/parser -Isrc/ast
+
 FLEX  ?= win_flex
+BISON ?= win_bison
 
 LEXER_TEST = lexer_test
-DIAG_SRC   = src/diag/diag.c
+LEXORA     = lexora
 
-.PHONY: all lexer_test test clean
+DIAG_SRC = src/diag/diag.c
+AST_SRC  = src/ast/ast.c
 
-all: $(LEXER_TEST)
+.PHONY: all lexer_test parser test clean
 
-# 1. Flex turns lexer.l into C code (generated file, ignored by git)
-src/lexer/lex.yy.c: src/lexer/lexer.l
+# Build lexer test and complete compiler
+all: $(LEXER_TEST) $(LEXORA)
+
+# Generate Bison parser files
+src/parser/parser.tab.c src/parser/parser.tab.h &: src/parser/parser.y
+	$(BISON) -d -o src/parser/parser.tab.c src/parser/parser.y
+
+# Generate Flex scanner
+src/lexer/lex.yy.c: src/lexer/lexer.l src/parser/parser.tab.h
 	$(FLEX) -o $@ $<
 
-# 2. Compile the lexer on its own, with the small test driver
+# Build standalone lexer
 $(LEXER_TEST): src/lexer/lex.yy.c src/lexer/lexer_main.c $(DIAG_SRC)
 	$(CC) $(CFLAGS) -DLEXER_ONLY -o $@ $^
 
-# Run every tests/*/*.mc program and compare against its .tokens.expected file
+# Build complete Lexora compiler
+$(LEXORA): src/parser/parser.tab.c src/lexer/lex.yy.c src/parser/parser_main.c $(DIAG_SRC) $(AST_SRC)
+	$(CC) $(CFLAGS) -o $@ $^
+
+# Parser shortcut
+parser: $(LEXORA)
+
+# Run only lexer tests having expected output files
 test: $(LEXER_TEST)
 	@pass=0; fail=0; \
-	for f in tests/*/*.mc; do \
-	  exp=$${f%.mc}.tokens.expected; \
+	for exp in tests/*/*.tokens.expected; do \
+	  f=$${exp%.tokens.expected}.mc; \
 	  if ./$(LEXER_TEST) $$f | diff -q --strip-trailing-cr - $$exp > /dev/null; then \
 	    echo "PASS  $$f"; pass=$$((pass+1)); \
 	  else \
@@ -36,5 +50,9 @@ test: $(LEXER_TEST)
 	done; \
 	echo "$$pass passed, $$fail failed"; [ $$fail -eq 0 ]
 
+# Clean generated files and executables
 clean:
-	$(RM) src/lexer/lex.yy.c $(LEXER_TEST) $(LEXER_TEST).exe
+	$(RM) src/lexer/lex.yy.c
+	$(RM) src/parser/parser.tab.c src/parser/parser.tab.h
+	$(RM) $(LEXER_TEST) $(LEXER_TEST).exe
+	$(RM) $(LEXORA) $(LEXORA).exe
