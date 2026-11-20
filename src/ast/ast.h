@@ -48,6 +48,9 @@ typedef struct ASTNode ASTNode;
 struct ASTNode {
     ASTNodeType type;
 
+    /* Source line number */
+    int line;
+
     union {
         struct {
             ASTNode *first;

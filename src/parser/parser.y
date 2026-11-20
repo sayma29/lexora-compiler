@@ -17,6 +17,7 @@ ASTNode *ast_root = NULL;
 #include "ast.h"
 }
 
+%locations
 %error-verbose
 
 %union {
@@ -58,6 +59,7 @@ program:
     statement_list
     {
         $$ = ast_create_program();
+        $$->line = 1;
 
         $$->data.program.first = $1->data.block.statements;
 
@@ -100,6 +102,7 @@ declaration:
     type TOK_ID TOK_SEMI
     {
         $$ = ast_create_declaration($1, $2);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -113,6 +116,7 @@ assignment:
     TOK_ID TOK_ASSIGN expression TOK_SEMI
     {
         $$ = ast_create_assignment($1, $3);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -120,6 +124,7 @@ print_statement:
     TOK_PRINT expression TOK_SEMI
     {
         $$ = ast_create_print($2);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -128,10 +133,12 @@ if_statement:
       %prec LOWER_THAN_ELSE
     {
         $$ = ast_create_if($3, $5, NULL);
+        $$->line = @1.first_line;
     }
     | TOK_IF TOK_LPAREN expression TOK_RPAREN statement TOK_ELSE statement
     {
         $$ = ast_create_if($3, $5, $7);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -139,6 +146,7 @@ while_statement:
     TOK_WHILE TOK_LPAREN expression TOK_RPAREN statement
     {
         $$ = ast_create_while($3, $5);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -146,6 +154,7 @@ block:
     TOK_LBRACE statement_list TOK_RBRACE
     {
         $$ = $2;
+        $$->line = @1.first_line;
     }
     ;
 
@@ -164,6 +173,7 @@ logical_or:
     | logical_or TOK_OR logical_and
     {
         $$ = ast_create_binary(OP_OR, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -175,6 +185,7 @@ logical_and:
     | logical_and TOK_AND equality
     {
         $$ = ast_create_binary(OP_AND, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -186,10 +197,12 @@ equality:
     | equality TOK_EQ relational
     {
         $$ = ast_create_binary(OP_EQ, $1, $3);
+        $$->line = @2.first_line;
     }
     | equality TOK_NE relational
     {
         $$ = ast_create_binary(OP_NE, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -201,18 +214,22 @@ relational:
     | relational TOK_LT additive
     {
         $$ = ast_create_binary(OP_LT, $1, $3);
+        $$->line = @2.first_line;
     }
     | relational TOK_GT additive
     {
         $$ = ast_create_binary(OP_GT, $1, $3);
+        $$->line = @2.first_line;
     }
     | relational TOK_LE additive
     {
         $$ = ast_create_binary(OP_LE, $1, $3);
+        $$->line = @2.first_line;
     }
     | relational TOK_GE additive
     {
         $$ = ast_create_binary(OP_GE, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -224,10 +241,12 @@ additive:
     | additive TOK_PLUS multiplicative
     {
         $$ = ast_create_binary(OP_ADD, $1, $3);
+        $$->line = @2.first_line;
     }
     | additive TOK_MINUS multiplicative
     {
         $$ = ast_create_binary(OP_SUB, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -239,14 +258,17 @@ multiplicative:
     | multiplicative TOK_STAR unary
     {
         $$ = ast_create_binary(OP_MUL, $1, $3);
+        $$->line = @2.first_line;
     }
     | multiplicative TOK_SLASH unary
     {
         $$ = ast_create_binary(OP_DIV, $1, $3);
+        $$->line = @2.first_line;
     }
     | multiplicative TOK_PERCENT unary
     {
         $$ = ast_create_binary(OP_MOD, $1, $3);
+        $$->line = @2.first_line;
     }
     ;
 
@@ -258,10 +280,12 @@ unary:
     | TOK_NOT unary
     {
         $$ = ast_create_unary(OP_NOT, $2);
+        $$->line = @1.first_line;
     }
     | TOK_MINUS unary
     {
         $$ = ast_create_unary(OP_NEG, $2);
+        $$->line = @1.first_line;
     }
     ;
 
@@ -269,24 +293,29 @@ primary:
       TOK_INTLIT
     {
         $$ = ast_create_int_literal((int)strtol($1, NULL, 10));
+        $$->line = @1.first_line;
         free($1);
     }
     | TOK_FLOATLIT
     {
         $$ = ast_create_float_literal(strtod($1, NULL));
+        $$->line = @1.first_line;
         free($1);
     }
     | TOK_TRUE
     {
         $$ = ast_create_bool_literal(1);
+        $$->line = @1.first_line;
     }
     | TOK_FALSE
     {
         $$ = ast_create_bool_literal(0);
+        $$->line = @1.first_line;
     }
     | TOK_ID
     {
         $$ = ast_create_identifier($1);
+        $$->line = @1.first_line;
     }
     | TOK_LPAREN expression TOK_RPAREN
     {
@@ -298,5 +327,6 @@ primary:
 
 void yyerror(const char *s)
 {
-    fprintf(stderr, "Syntax Error at line %d: %s\n", yylineno, s);
+    fprintf(stderr, "Syntax Error at line %d: %s\n",
+            yylloc.first_line, s);
 }
